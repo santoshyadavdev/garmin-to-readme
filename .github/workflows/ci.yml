@@ -55,6 +55,3 @@ jobs:
         with:
           GARMIN_API_URL: "https://dummyjson.com/posts"
 
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
