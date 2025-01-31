@@ -53,7 +53,7 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          GARMIN_API_URL: "https://api.example.com"
 
       - name: Print Output
         id: output

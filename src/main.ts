@@ -63,6 +63,7 @@ interface LastActivity {
   minActivityLapDuration: number
   aerobicTrainingEffectMessage: string
   anaerobicTrainingEffectMessage: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   splitSummaries: any[]
   hasSplits: boolean
   moderateIntensityMinutes: number
