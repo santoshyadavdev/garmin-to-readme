@@ -53,7 +53,7 @@ jobs:
         id: test-action
         uses: ./
         with:
-          GARMIN_API_URL: "https://api.example.com"
+          GARMIN_API_URL: "https://dummyjson.com/posts"
 
       - name: Print Output
         id: output
