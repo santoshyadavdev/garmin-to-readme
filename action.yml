@@ -1,6 +1,6 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: Garmin to readme
+description: Add yout garmin activities to your readme
+author: Santosh Yadav
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
@@ -9,15 +9,19 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
+  GARMIN_API_URL:
+    description:
+      Garmin API URL to fetch data from garmin see
+      https://github.com/santoshyadavdev/garmin-api
     required: true
-    default: '1000'
-
-# Define your outputs here.
-outputs:
-  time:
-    description: Your output description here
+  COMMIT_NAME:
+    description: 'Name of the committer'
+    default: 'github-actions[bot]'
+    required: false
+  COMMIT_EMAIL:
+    description: 'Email of the committer'
+    default: '41898282+github-actions[bot]@users.noreply.github.com'
+    required: false
 
 runs:
   using: node20

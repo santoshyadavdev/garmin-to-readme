@@ -25,8 +25,9 @@ import require$$1$4 from 'url';
 import require$$3$1 from 'zlib';
 import require$$6 from 'string_decoder';
 import require$$0$9 from 'diagnostics_channel';
-import require$$2$2 from 'child_process';
+import require$$2$2, { execSync } from 'child_process';
 import require$$6$1 from 'timers';
+import { readFileSync } from 'node:fs';
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -27238,20 +27239,52 @@ function requireCore () {
 
 var coreExports = requireCore();
 
-/**
- * Waits for a number of milliseconds.
- *
- * @param milliseconds The number of milliseconds to wait.
- * @returns Resolves with 'done!' after the wait is over.
- */
-async function wait(milliseconds) {
-    return new Promise((resolve) => {
-        if (isNaN(milliseconds))
-            throw new Error('milliseconds is not a number');
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
+const Garmin_api_url = coreExports.getInput('GARMIN_API_URL');
+// const octoit = new Octokit({ auth: process.env.GITHUB_TOKEN })
+const COMMIT_NAME = coreExports.getInput('COMMIT_NAME');
+const COMMIT_EMAIL = coreExports.getInput('COMMIT_EMAIL');
+async function updateReadme(garminData) {
+    const readmePath = 'README.md';
+    const startMarker = '<!-- GARMIN-DATA:START -->';
+    const endMarker = '<!-- GARMIN-DATA:END -->';
+    let readmeContent = '';
+    try {
+        readmeContent = readFileSync(readmePath, 'utf8');
+    }
+    catch (error) {
+        if (error.code === 'ENOENT') {
+            coreExports.warning('README.md not found, creating new file');
+        }
+        else {
+            throw new Error(`Failed to read README.md: ${error}`);
+        }
+    }
+    const newContent = `${garminData.last_activity.activityName} distace: ${garminData.last_activity.distance} duration: ${garminData.last_activity.duration} steps: ${garminData.last_activity.steps}`;
+    if (readmeContent) {
+        const startIndex = readmeContent.indexOf(startMarker);
+        const endIndex = readmeContent.indexOf(endMarker) + endMarker.length;
+        if (startIndex === -1 || endIndex === -1) {
+            coreExports.info('Markers not found, appending content to README');
+            readmeContent = `${readmeContent}\n\n${newContent}`;
+        }
+        else if (endIndex <= startIndex) {
+            throw new Error('Invalid marker positions in README.md');
+        }
+        else {
+            readmeContent =
+                readmeContent.substring(0, startIndex) +
+                    newContent +
+                    readmeContent.substring(endIndex);
+        }
+    }
+    else {
+        readmeContent = newContent;
+    }
+    execSync(`git config --global user.name `);
+    execSync(`git config --global user.email "${COMMIT_NAME}"`);
+    execSync(`git commit --allow-empty -m "${COMMIT_EMAIL}"`);
+    execSync('git push');
 }
-
 /**
  * The main function for the action.
  *
@@ -27259,15 +27292,19 @@ async function wait(milliseconds) {
  */
 async function run() {
     try {
-        const ms = coreExports.getInput('milliseconds');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        coreExports.debug(`Waiting ${ms} milliseconds ...`);
-        // Log the current timestamp, wait, then log the new timestamp
-        coreExports.debug(new Date().toTimeString());
-        await wait(parseInt(ms, 10));
-        coreExports.debug(new Date().toTimeString());
+        // call fetch to get the data from an api
+        const response = await fetch(Garmin_api_url);
+        // check if the response is ok add the data to readme.md
+        if (response.ok) {
+            const data = await response.json();
+            await updateReadme(data);
+            coreExports.info(`Data: ${data}`);
+        }
+        else {
+            coreExports.warning(`Failed to fetch data from ${Garmin_api_url}`);
+        }
         // Set outputs for other workflow steps to use
-        coreExports.setOutput('time', new Date().toTimeString());
+        // core.setOutput('time', new Date().toTimeString())
     }
     catch (error) {
         // Fail the workflow run if an error occurs
